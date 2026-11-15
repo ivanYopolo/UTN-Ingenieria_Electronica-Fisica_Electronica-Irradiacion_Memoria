@@ -18,13 +18,13 @@
     /* ###########################################
      * ### INCLUDES GLOBALES ###
      * ########################################### */
-	#include "Drivers/tipos.h"
+	#include <Aplicacion/ram_management.h>
+#include "Drivers/tipos.h"
 	#include "Modulos/includeModulos.h"
 	#include "Drivers/Systick/systick.h"
 	#include "Drivers/LPC845.h"
 	#include "Drivers/C-Timer/c_timer.h"
-	#include "Aplicacion/flash_management.h"
-
+	
 
     /* ###########################################
      * ### MACROS & TIPOS DE DATOS GLOBALES ###

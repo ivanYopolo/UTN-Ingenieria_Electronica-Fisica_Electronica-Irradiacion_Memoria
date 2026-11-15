@@ -5,7 +5,9 @@
  *      Author: iyopolo
  */
 
-#include "Modulos/02-GPIO/GPIO.h"
+#include "GPIO.h"
+#include "PERI_SYSCON.h"
+
 
 
 // La clase, al tener ctes, SIEMPRE hay que inicializarlas. Los 2 constructores chocan en ese sentido y por eso da error.
