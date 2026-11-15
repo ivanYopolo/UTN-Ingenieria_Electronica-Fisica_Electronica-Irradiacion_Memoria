@@ -1,11 +1,9 @@
 /*********************************************
  *
- * ### flash_management.cpp ###
+ * ### ram_management.cpp ###
  * 
- * @brief           Manejo de memoria FLASH.
- * 					La escritura mínima es de 1 página.
- * 					En el caso del LPC845, una página son 64 B.
- * @date            31/10/2026
+ * @brief           Manejo de memoria RAM.
+ * @date            15/11/2026
  * @author          iyopolo
  *
  *********************************************/
@@ -21,9 +19,9 @@
  * ### MACROS & TIPOS DE DATOS PRIVADOS ###
  * ########################################### */
 // # RAM #
-#define	FLASH_BEGIN_ADDR	(0x00000000u)
-#define	FLASH_END_ADDR		(0x00010000u)
-#define FLASH_MEMORY_SIZE	(FLASH_END_ADDR - FLASH_BEGIN_ADDR)
+#define	FLASH_BEGIN_ADDR	((uint32_t) 0x00000000)
+#define	FLASH_END_ADDR		((uint32_t) 0x00010000)
+#define FLASH_MEMORY_SIZE	((uint32_t) (FLASH_END_ADDR - FLASH_BEGIN_ADDR))
 
 // # APLICACIÓN #
 #define INT_PI				3141592653
@@ -110,7 +108,7 @@ void Init_Flash_Write() {
  * Borra la RAM.
  */
 void ClearRAM( void *inputptr, uint32_t size ) {
-	uint8_t *ptr = inputptr;
+	uint8_t *ptr = (uint8_t *) inputptr;
 
 
 	for ( uint8_t i = 0; i < size; ++i ) {
@@ -124,14 +122,14 @@ void ClearRAM( void *inputptr, uint32_t size ) {
  *********************************************
  * Escribe en toda la RAM el valor asignado.
  */
-void Write_Bytes_in_Memory( const void *dataInput, const uint16_t nBytes,
-							void *writtenData, const uint16_t sizeWrite ) {
+void Write_Bytes_in_Memory( const void *dataInput, const uint32_t nBytes,
+							void *writtenData, const uint32_t sizeWrite ) {
 
-	const uint8_t 	intDataInput = *((const uint8_t *) dataInput);
-	uint32_t		*writtenRAM = writtenData;
+	const uint8_t 	*intDataInput 	= (const uint8_t *) dataInput;
+	uint8_t			*writtenRAM 	= (uint8_t *) writtenData;
 
 
-	for ( uint8_t i = 0; i < sizeWrite; ++i ) {
+	for ( uint32_t i = 0; i < sizeWrite; ++i ) {
 		writtenRAM[i] = intDataInput[i % nBytes];
 	}
 }
@@ -144,7 +142,7 @@ void Write_Bytes_in_Memory( const void *dataInput, const uint16_t nBytes,
  * bloque en "dataRead".
  */
 void Read_Bytes_in_Memory( void *dataRead, void *changedData,
-						   const uint16_t size ) {
+						   const uint32_t size ) {
 
 	uint8_t *intDataRead 	= (uint8_t *) dataRead;
 	uint8_t *dataInRAM		= (uint8_t *) changedData;
