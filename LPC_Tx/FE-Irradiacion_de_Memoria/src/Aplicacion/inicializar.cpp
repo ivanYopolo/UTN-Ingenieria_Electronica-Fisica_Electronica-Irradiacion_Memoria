@@ -32,8 +32,8 @@
 #define __UART_RX_PIN				24
 #define __UART_USART_x				0
 #define __UART_BAUDRATE				9600
-#define __UART_MAX_RX				8
-#define __UART_MAX_TX				1024
+#define __UART_MAX_RX				(uint32_t) (0x1000)
+#define __UART_MAX_TX				(uint32_t) (0x1000)
 
 
 /* ###########################################
@@ -77,8 +77,8 @@ void Inicializar() {
 //	 ### Systick ###
 	SysTick_Config( 1 );
 
-	// ### FLASH ###
-	Init_Flash_Write();
+	// ### RAM ###
+	Init_RAM_Write();
 }
 
 
