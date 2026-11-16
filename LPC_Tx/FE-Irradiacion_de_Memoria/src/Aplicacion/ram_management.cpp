@@ -19,7 +19,8 @@
  * ### MACROS & TIPOS DE DATOS PRIVADOS ###
  * ########################################### */
 // # RAM #
-#define RAM_MEMORY_SIZE		((uint32_t) (0x100))
+#define RAM_INT_BLOCKS			((uint32_t) (0x100))
+#define RAM_MEMORY_SIZE		(RAM_INT_BLOCKS * sizeof(uint32_t))
 
 // # APLICACIÓN #
 #define MAX_UINT32_VALUE	((uint32_t) -1)
@@ -168,7 +169,7 @@ void Read_Bytes_in_Memory( const void * const inputData, void * const copyData,
  * Se aloja el dato leído en el stack así se renueva constantemente.
  */
 void Tx_Memory_Data() {
-	uint32_t	tempChangedData[RAM_MEMORY_SIZE];
+	uint32_t	tempChangedData[RAM_INT_BLOCKS];
 	char 		okMsg[OK_MSG_SIZE] = "(OK)";
 	char 		flipMsg[FLIP_MSG_SIZE] = "(FLIP)";
 	char		inicioDeTrama = '[';
@@ -200,7 +201,7 @@ void Tx_Memory_Data() {
 		serialCOMS_LPC.Transmit( (void *) flipMsg, FLIP_MSG_SIZE - 1 );
 
 		// Mete los valores cambiados en la lista circular.
-		for ( uint32_t i = 0; i < RAM_MEMORY_SIZE; ++i ) {
+		for ( uint32_t i = 0; i < RAM_INT_BLOCKS; ++i ) {
 
 			if ( tempChangedData[i] != 0 ) {
 				// Preparar mensaje en ASCII.
@@ -243,7 +244,7 @@ bool CheckBitFlips_RAM( const uint32_t * const inputData, uint32_t * const irrad
 		return false;
 
 
-	for ( uint32_t i = 0; i < RAM_MEMORY_SIZE; ++i ) {
+	for ( uint32_t i = 0; i < RAM_INT_BLOCKS; ++i ) {
 
 		if ( inputReadData[i] ^ tempData ) {
 
@@ -357,7 +358,7 @@ void Check_Timer_Events() {
 void Init_RAM_Write() {
 
 	uint32_t valueStored = INT_PI;
-	memoryIrradiated = new uint32_t[RAM_MEMORY_SIZE];
+	memoryIrradiated = new uint32_t[RAM_INT_BLOCKS];
 
 
 	if ( !memoryIrradiated )	// ERROR por falta de memoria.
