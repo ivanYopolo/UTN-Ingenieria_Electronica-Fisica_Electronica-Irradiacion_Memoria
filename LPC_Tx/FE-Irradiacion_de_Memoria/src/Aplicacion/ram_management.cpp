@@ -367,7 +367,7 @@ void Init_RAM_Write() {
 	Clear_RAM_Bytes( memoryIrradiated, RAM_MEMORY_SIZE );
 
 	Write_Bytes_in_Memory( (const void *) & valueStored, sizeof(uint32_t),
-						   (void *) memoryIrradiated, RAM_MEMORY_SIZE );
+						   (void *) memoryIrradiated, RAM_INT_BLOCKS );
 
 	Tx_Memory_Data();
 }
