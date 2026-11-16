@@ -220,8 +220,8 @@ void Tx_Memory_Data() {
 
 	delete[] txData;
 
-//	timer_Tx.TimerStart( 1, Timer::bases_t::MIN, Tx_Memory_Data );
-	timer_Tx.TimerStart( 5, Timer::bases_t::SEG, Tx_Memory_Data );
+	timer_Tx.TimerStart( 1, Timer::bases_t::MIN, Tx_Memory_Data );
+//	timer_Tx.TimerStart( 5, Timer::bases_t::SEG, Tx_Memory_Data );
 }
 
 
