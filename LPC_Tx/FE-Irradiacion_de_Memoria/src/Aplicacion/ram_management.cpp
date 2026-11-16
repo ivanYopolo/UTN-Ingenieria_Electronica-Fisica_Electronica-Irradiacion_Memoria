@@ -36,7 +36,7 @@ void Clear_RAM_Bytes( void *inputptr, uint32_t arraySizeBytes );
 void Tx_Memory_Data();
 void Write_Bytes_in_Memory( const void *dataInput, uint32_t nBytes,
 							void *writtenData, const uint32_t sizeWrite );
-void Read_Bytes_in_Memory( void *dataRead, const void * const changedData,
+void Read_Bytes_in_Memory( const void * const inputData, void *copyData,
 						   const uint32_t size );
 bool CheckBitFlips_RAM( const uint32_t * const inputData, uint32_t * const irradiatedData );
 void Serial_Armar_Trama_Data( char * const inputArray, uint32_t arraySizeBytes,
@@ -127,7 +127,7 @@ void Write_Bytes_in_Memory( const void * const dataInput, const uint32_t nBytes,
 		return;
 
 
-	for ( uint32_t i = 0; i < sizeWrite; ++i ) {
+	for ( uint32_t i = 0; i < (sizeWrite * nBytes); ++i ) {
 		writtenRAM[i] = intDataInput[i % nBytes];
 	}
 }
@@ -137,16 +137,16 @@ void Write_Bytes_in_Memory( const void * const dataInput, const uint32_t nBytes,
  * Read_Bytes_in_Memory
  *********************************************
  * Lee toda la zona de memoria RAM disponible y guarda todo el
- * bloque en "dataRead".
+ * bloque en "copyData".
  */
-void Read_Bytes_in_Memory( void * const dataRead, const void * const changedData,
+void Read_Bytes_in_Memory( const void * const inputData, void * const copyData,
 						   const uint32_t size ) {
 
-	uint8_t * const intDataRead 		= (uint8_t * const) dataRead;
-	const uint8_t * const dataInRAM		= (const uint8_t * const) changedData;
+	uint8_t * const intDataRead 		= (uint8_t * const) copyData;
+	const uint8_t * const dataInRAM		= (const uint8_t * const) inputData;
 
 	// < ERRORS >
-	if ( (!dataRead) || (!changedData) )
+	if ( (!copyData) || (!inputData) )
 		return;
 	if ( size == 0 )
 		return;
@@ -168,8 +168,6 @@ void Read_Bytes_in_Memory( void * const dataRead, const void * const changedData
  * Se aloja el dato leído en el stack así se renueva constantemente.
  */
 void Tx_Memory_Data() {
-//	uint32_t valueRead = CheckBitFlips();
-	uint32_t 	valueRead[RAM_MEMORY_SIZE];
 	uint32_t	tempChangedData[RAM_MEMORY_SIZE];
 	char 		okMsg[OK_MSG_SIZE] = "(OK)";
 	char 		flipMsg[FLIP_MSG_SIZE] = "(FLIP)";
@@ -178,19 +176,26 @@ void Tx_Memory_Data() {
 //	char		txData[MAX_UINT32_VALUE];	// Calcular dígitos en valor máximo de uint32_t
 	char		*txData = nullptr;
 	uint32_t	uint32_tTmpMaxDigits = 0;
+	uint32_t	txSize;
 
 
 	uint32_tTmpMaxDigits = Calculate_uint32_t_Max_Value_Digits();
-	txData = new char[uint32_tTmpMaxDigits];
+	txSize = uint32_tTmpMaxDigits + 2;
+	txData = new char[txSize];	// Se le suma caracter de inicio y de fin de trama.
 
 	if ( !txData )
 		return;
 
+	for ( uint32_t i = 0; i < uint32_tTmpMaxDigits; ++i ) {
+		txData[i] = 0;
+	}
 
-	Read_Bytes_in_Memory( (void *) valueRead, (void *) memoryIrradiated,
-						  RAM_MEMORY_SIZE );
+//	Clear_RAM_Bytes( valueRead, RAM_MEMORY_SIZE );
 
-	if ( CheckBitFlips_RAM( valueRead, tempChangedData ) == true ) {
+//	Read_Bytes_in_Memory( (void *) memoryIrradiated, (void *) valueRead,
+//						  RAM_MEMORY_SIZE );
+
+	if ( CheckBitFlips_RAM( memoryIrradiated, tempChangedData ) == true ) {
 
 		serialCOMS_LPC.Transmit( (void *) flipMsg, FLIP_MSG_SIZE - 1 );
 
@@ -199,9 +204,9 @@ void Tx_Memory_Data() {
 
 			if ( tempChangedData[i] != 0 ) {
 				// Preparar mensaje en ASCII.
-				Serial_Armar_Trama_Data( txData, MAX_UINT32_VALUE, inicioDeTrama, finDeTrama );
-				uint32_tToASCII( tempChangedData[i], txData, uint32_tTmpMaxDigits );
-				serialCOMS_LPC.Transmit( (void *) txData, uint32_tTmpMaxDigits );
+				Serial_Armar_Trama_Data( txData, txSize, inicioDeTrama, finDeTrama );
+				uint32_tToASCII( tempChangedData[i], txData + 1, uint32_tTmpMaxDigits );
+				serialCOMS_LPC.Transmit( (void *) txData, txSize );
 			}
 		}
 
