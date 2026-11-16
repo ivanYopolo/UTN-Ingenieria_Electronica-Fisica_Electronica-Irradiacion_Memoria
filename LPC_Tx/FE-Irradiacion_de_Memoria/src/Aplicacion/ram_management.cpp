@@ -220,8 +220,8 @@ void Tx_Memory_Data() {
 
 	delete[] txData;
 
-	timer_Tx.TimerStart( 1, Timer::bases_t::MIN, Tx_Memory_Data );
-//	timer_Tx.TimerStart( 5, Timer::bases_t::SEG, Tx_Memory_Data );
+//	timer_Tx.TimerStart( 1, Timer::bases_t::MIN, Tx_Memory_Data );
+	timer_Tx.TimerStart( 5, Timer::bases_t::SEG, Tx_Memory_Data );
 }
 
 
@@ -289,7 +289,8 @@ void Serial_Armar_Trama_Data( char * const inputArray, uint32_t arraySizeBytes,
  */
 void uint32_tToASCII( uint32_t intData, char * const asciiArray, const uint32_t arraySizeBytes ) {
 
-	uint32_t uintMaxValue = (uint32_t) -1;
+//	uint32_t uintMaxValue = (uint32_t) -1;
+	char temp = 0;
 
 
 	if ( (!asciiArray) || (arraySizeBytes == 0) )
@@ -297,9 +298,10 @@ void uint32_tToASCII( uint32_t intData, char * const asciiArray, const uint32_t 
 
 //	char tmpArray[arraySizeBytes];
 
-	for ( uint32_t index = 0; (index <= uintMaxValue) && (intData > 0); ++index ) {
+	for ( uint32_t index = 0; (index < arraySizeBytes) && (intData != 0); ++index ) {
 //		tmpArray[index] = intData % 10;
-		asciiArray[index] = intData % 10;
+		temp = '0' + (intData % 10);
+		asciiArray[index] = ( (temp > '0') && (temp < '9') ) ? temp : '0';
 		intData = intData / 10;
 	}
 
@@ -321,9 +323,9 @@ void Reverse_Array_Data( char * const inputArray, const uint32_t arraySizeBytes 
 		return;
 
 
-	for ( uint32_t i = 0; (i < 1 + (arraySizeBytes / 2)); ++i ) {
-		tmpData = inputArray[arraySizeBytes - i];
-		inputArray[arraySizeBytes - i] = inputArray[i];
+	for ( uint32_t i = 0; (i < (arraySizeBytes / 2)); ++i ) {
+		tmpData = inputArray[arraySizeBytes - 1 - i];
+		inputArray[arraySizeBytes - 1 - i] = inputArray[i];
 		inputArray[i] = tmpData;
 	}
 }
