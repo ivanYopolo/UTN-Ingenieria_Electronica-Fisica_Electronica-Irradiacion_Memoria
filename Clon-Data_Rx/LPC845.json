@@ -1,0 +1,471 @@
+[
+    {
+        "id": "7d7a16224e695315",
+        "type": "subflow",
+        "name": "Cargar dato",
+        "info": "# Registro de datos por lotes\r\n\r\nGuarda un dato por línea (con timestamp) en un archivo `.txt`, hasta alcanzar la cantidad máxima de datapoints. Al completarse, deja el archivo listo para subir al servidor y arranca uno nuevo.\r\n\r\n## Funcionamiento\r\n- Cada mensaje de entrada (`msg.payload`) se guarda como una línea: `timestamp, dato`.\r\n- El archivo en curso se crea con el nombre `AAAA-M-D_H-m-s.txt` y se reutiliza hasta llegar al máximo.\r\n- Al llegar a `max_dps` datapoints, se indica el archivo a enviar y el siguiente dato abre un archivo nuevo.\r\n- **Envío anticipado:** un mensaje con `msg.sendnow = true` interrumpe la acumulación y envía el archivo actual de inmediato, sin agregar su contenido al archivo.\r\n\r\n## Parámetros del subflujo\r\n| Parámetro | Descripción |\r\n|---|---|\r\n| `proyecto` | Nombre del proyecto; carpeta raíz donde se guardan y suben los archivos |\r\n| `subdir` | Subcarpeta dentro del proyecto, para separar distintas mediciones |\r\n| `max_dps` | Cantidad máxima de datapoints (líneas) por archivo antes de enviarlo |\r\n",
+        "category": "laboratorio virtual",
+        "in": [
+            {
+                "x": 200,
+                "y": 260,
+                "wires": [
+                    {
+                        "id": "252cbf6b4539e417"
+                    }
+                ]
+            }
+        ],
+        "out": [],
+        "env": [
+            {
+                "name": "proyecto",
+                "type": "str",
+                "value": "",
+                "ui": {
+                    "icon": "font-awesome/fa-archive",
+                    "label": {
+                        "es-ES": "Proyecto"
+                    },
+                    "type": "input",
+                    "opts": {
+                        "types": [
+                            "str",
+                            "num",
+                            "env"
+                        ]
+                    }
+                }
+            },
+            {
+                "name": "subdir",
+                "type": "str",
+                "value": "",
+                "ui": {
+                    "icon": "font-awesome/fa-folder-open-o",
+                    "label": {
+                        "es-ES": "Sub-directorio"
+                    },
+                    "type": "input",
+                    "opts": {
+                        "types": [
+                            "str",
+                            "num",
+                            "env"
+                        ]
+                    }
+                }
+            },
+            {
+                "name": "max_dps",
+                "type": "num",
+                "value": "10",
+                "ui": {
+                    "icon": "font-awesome/fa-align-left",
+                    "label": {
+                        "es-ES": "Lineas por archivo"
+                    },
+                    "type": "spinner",
+                    "opts": {
+                        "min": 1
+                    }
+                }
+            }
+        ],
+        "meta": {},
+        "color": "#3FADB5",
+        "icon": "node-red/file-out.svg"
+    },
+    {
+        "id": "a4a5c5035a7996f5",
+        "type": "function",
+        "z": "7d7a16224e695315",
+        "name": "format for file",
+        "func": "let date__ = new Date()\nlet count_dps = flow.get(\"count_dps\") ?? 0 // cuenta de datapoints\nconst CONFIG = global.get(\"GlobalConfig\")\nconst proyecto = env.get(\"proyecto\");\nconst subdir = env.get(\"subdir\");\nconst max_dps_per_file = env.get(\"max_dps\");\n\nconst dir = `${proyecto}/${subdir}`\n\ncount_dps ++;\n\nlet current_file\n\nif (flow.get(\"current_file\") == null)\n{\n    current_file = `${date__.getFullYear()}-${date__.getMonth()+1}-${date__.getDate()}_${date__.getHours()}-${date__.getMinutes()}-${date__.getSeconds()}.txt`\n    flow.set(\"current_file\", current_file)\n}\nelse\n{\n    current_file = flow.get(\"current_file\")\n}\nmsg.tempfile = `${CONFIG.tempDirectory}/${dir}/${current_file}`\n\nmsg.payload = `${date__.getFullYear()}-${date__.getMonth()+1}-${date__.getDate()} ${date__.getHours()}:${date__.getMinutes()}:${date__.getSeconds()}.${date__.getMilliseconds()}, ${msg.payload}\\n`\n\nmsg.is_lastest = count_dps >= max_dps_per_file;\n\nif (msg.is_lastest)\n{\n    count_dps = 0;\n    flow.set(\"current_file\", null)\n    msg.sendfile = `${CONFIG.sendDirectory}/${dir}/${current_file}`\n}\n\n\nflow.set(\"count_dps\", count_dps)\n\nreturn msg;\n",
+        "outputs": 1,
+        "timeout": 0,
+        "noerr": 0,
+        "initialize": "",
+        "finalize": "",
+        "libs": [],
+        "x": 530,
+        "y": 280,
+        "wires": [
+            [
+                "e4e3c306e4913651"
+            ]
+        ]
+    },
+    {
+        "id": "e4e3c306e4913651",
+        "type": "file",
+        "z": "7d7a16224e695315",
+        "name": "",
+        "filename": "tempfile",
+        "filenameType": "msg",
+        "appendNewline": false,
+        "createDir": true,
+        "overwriteFile": "false",
+        "encoding": "none",
+        "x": 740,
+        "y": 280,
+        "wires": [
+            [
+                "4a63c7bed68b76b9"
+            ]
+        ]
+    },
+    {
+        "id": "4a63c7bed68b76b9",
+        "type": "switch",
+        "z": "7d7a16224e695315",
+        "name": "is_lastest?",
+        "property": "is_lastest",
+        "propertyType": "msg",
+        "rules": [
+            {
+                "t": "true"
+            }
+        ],
+        "checkall": "true",
+        "repair": false,
+        "outputs": 1,
+        "x": 950,
+        "y": 280,
+        "wires": [
+            [
+                "cc482c728fb0cb84"
+            ]
+        ]
+    },
+    {
+        "id": "cc482c728fb0cb84",
+        "type": "file in",
+        "z": "7d7a16224e695315",
+        "name": "",
+        "filename": "tempfile",
+        "filenameType": "msg",
+        "format": "utf8",
+        "chunk": false,
+        "sendError": false,
+        "encoding": "none",
+        "allProps": false,
+        "x": 1130,
+        "y": 280,
+        "wires": [
+            [
+                "41299a41ed0cebd6",
+                "3c26e3468617ee51"
+            ]
+        ]
+    },
+    {
+        "id": "41299a41ed0cebd6",
+        "type": "file",
+        "z": "7d7a16224e695315",
+        "name": "",
+        "filename": "sendfile",
+        "filenameType": "msg",
+        "appendNewline": true,
+        "createDir": true,
+        "overwriteFile": "false",
+        "encoding": "none",
+        "x": 1320,
+        "y": 280,
+        "wires": [
+            [
+                "12c80cc340b7ba8c"
+            ]
+        ]
+    },
+    {
+        "id": "12c80cc340b7ba8c",
+        "type": "file",
+        "z": "7d7a16224e695315",
+        "name": "",
+        "filename": "tempfile",
+        "filenameType": "msg",
+        "appendNewline": true,
+        "createDir": false,
+        "overwriteFile": "delete",
+        "encoding": "none",
+        "x": 1500,
+        "y": 280,
+        "wires": [
+            []
+        ]
+    },
+    {
+        "id": "3c26e3468617ee51",
+        "type": "debug",
+        "z": "7d7a16224e695315",
+        "name": "debug 59",
+        "active": true,
+        "tosidebar": true,
+        "console": false,
+        "tostatus": false,
+        "complete": "true",
+        "targetType": "full",
+        "statusVal": "",
+        "statusType": "auto",
+        "x": 1280,
+        "y": 340,
+        "wires": []
+    },
+    {
+        "id": "252cbf6b4539e417",
+        "type": "switch",
+        "z": "7d7a16224e695315",
+        "name": "",
+        "property": "sendnow",
+        "propertyType": "msg",
+        "rules": [
+            {
+                "t": "true"
+            },
+            {
+                "t": "else"
+            }
+        ],
+        "checkall": "true",
+        "repair": false,
+        "outputs": 2,
+        "x": 330,
+        "y": 260,
+        "wires": [
+            [
+                "407ae230a4f65382"
+            ],
+            [
+                "a4a5c5035a7996f5"
+            ]
+        ]
+    },
+    {
+        "id": "407ae230a4f65382",
+        "type": "function",
+        "z": "7d7a16224e695315",
+        "name": "send now",
+        "func": "\nlet current_file = flow.get(\"current_file\")\n\nif (current_file != null)\n{\n    const CONFIG = global.get(\"GlobalConfig\")\n    const proyecto = env.get(\"proyecto\");\n    const subdir = env.get(\"subdir\");\n\n    const dir = `${proyecto}/${subdir}`\n\n    flow.set(\"count_dps\", 0);\n    flow.set(\"current_file\", null)\n    msg.tempfile = `${CONFIG.tempDirectory}/${dir}/${current_file}`\n    msg.sendfile = `${CONFIG.sendDirectory}/${dir}/${current_file}`\n    return msg;\n}",
+        "outputs": 1,
+        "timeout": 0,
+        "noerr": 0,
+        "initialize": "",
+        "finalize": "",
+        "libs": [],
+        "x": 940,
+        "y": 220,
+        "wires": [
+            [
+                "cc482c728fb0cb84"
+            ]
+        ]
+    },
+    {
+        "id": "8ada3cb510c5cdd7",
+        "type": "tab",
+        "label": "LPC845",
+        "disabled": false,
+        "info": "",
+        "env": []
+    },
+    {
+        "id": "184ed90d4140fc64",
+        "type": "group",
+        "z": "8ada3cb510c5cdd7",
+        "name": "LPC845",
+        "style": {
+            "stroke": "#6f2fa0",
+            "fill": "#b797cf",
+            "label": true,
+            "color": "#000000"
+        },
+        "nodes": [
+            "5d29faeed432a4f8",
+            "d38486d02f723050",
+            "619a875e56496c59"
+        ],
+        "x": 414,
+        "y": 119,
+        "w": 392,
+        "h": 142
+    },
+    {
+        "id": "733d7fc033e25d67",
+        "type": "serial in",
+        "z": "8ada3cb510c5cdd7",
+        "name": "UART0",
+        "serial": "0785224d35f0a715",
+        "x": 270,
+        "y": 80,
+        "wires": [
+            [
+                "b9bf24fa84b1f5a4"
+            ]
+        ]
+    },
+    {
+        "id": "5d29faeed432a4f8",
+        "type": "inject",
+        "z": "8ada3cb510c5cdd7",
+        "g": "184ed90d4140fc64",
+        "name": "agregar dato",
+        "props": [
+            {
+                "p": "payload"
+            },
+            {
+                "p": "topic",
+                "vt": "str"
+            }
+        ],
+        "repeat": "",
+        "crontab": "",
+        "once": false,
+        "onceDelay": 0.1,
+        "topic": "",
+        "payload": "",
+        "payloadType": "date",
+        "x": 530,
+        "y": 220,
+        "wires": [
+            [
+                "d38486d02f723050"
+            ]
+        ]
+    },
+    {
+        "id": "d38486d02f723050",
+        "type": "subflow:7d7a16224e695315",
+        "z": "8ada3cb510c5cdd7",
+        "g": "184ed90d4140fc64",
+        "name": "",
+        "env": [
+            {
+                "name": "proyecto",
+                "value": "2026-2c-LPC845",
+                "type": "str"
+            }
+        ],
+        "x": 710,
+        "y": 220,
+        "wires": []
+    },
+    {
+        "id": "619a875e56496c59",
+        "type": "inject",
+        "z": "8ada3cb510c5cdd7",
+        "g": "184ed90d4140fc64",
+        "name": "subir ya",
+        "props": [
+            {
+                "p": "payload"
+            },
+            {
+                "p": "sendnow",
+                "v": "true",
+                "vt": "bool"
+            }
+        ],
+        "repeat": "",
+        "crontab": "",
+        "once": false,
+        "onceDelay": 0.1,
+        "topic": "",
+        "payload": "",
+        "payloadType": "date",
+        "x": 510,
+        "y": 160,
+        "wires": [
+            [
+                "d38486d02f723050"
+            ]
+        ]
+    },
+    {
+        "id": "b9bf24fa84b1f5a4",
+        "type": "function",
+        "z": "8ada3cb510c5cdd7",
+        "name": "Interpretar ",
+        "func": "// 1. Limpiar espacios y saltos de línea de la trama recibida\nlet trama = msg.payload.toString().trim();\n\n// 2. Verificar si es una trama \"(OK)\"\nif (trama === \"(OK)\") {\n    msg.payload = \"OK\";\n    return msg;\n}\n\n// 3. Verificar si empieza con \"(FLIP)\"\nif (trama.startsWith(\"(FLIP)\")) {\n    // Extraer todos los valores que estén entre corchetes [...] usando expresiones regulares\n    let coincidencias = [...trama.matchAll(/\\[([^\\]]+)\\]/g)];\n    \n    // Obtener solo el contenido interno de cada corchete en un array: [\"num1\", \"num2\", ...]\n    let numerosFlipeados = coincidencias.map(m => m[1].trim());\n    \n    if (numerosFlipeados.length > 0) {\n        // Formatear para el archivo CSV/TXT: ej. \"FLIP, 12, 45, 108\"\n        msg.payload = \"FLIP, \" + numerosFlipeados.join(\", \");\n    } else {\n        msg.payload = \"FLIP, SIN_DATOS\";\n    }\n    \n    return msg;\n}\n\n// Si llega ruido o una trama vacía/no reconocida, descartarla\nreturn null;\n\n\n",
+        "outputs": 1,
+        "timeout": 0,
+        "noerr": 0,
+        "initialize": "",
+        "finalize": "",
+        "libs": [],
+        "x": 510,
+        "y": 80,
+        "wires": [
+            [
+                "d38486d02f723050",
+                "c6b4f71a9f324e27"
+            ]
+        ]
+    },
+    {
+        "id": "6573af1a3fcd5fa1",
+        "type": "inject",
+        "z": "8ada3cb510c5cdd7",
+        "name": "",
+        "props": [
+            {
+                "p": "payload"
+            },
+            {
+                "p": "topic",
+                "vt": "str"
+            }
+        ],
+        "repeat": "",
+        "crontab": "",
+        "once": false,
+        "onceDelay": 0.1,
+        "topic": "",
+        "payload": "(FLIP)[3145555555][44545553445]",
+        "payloadType": "str",
+        "x": 270,
+        "y": 160,
+        "wires": [
+            [
+                "b9bf24fa84b1f5a4"
+            ]
+        ]
+    },
+    {
+        "id": "c6b4f71a9f324e27",
+        "type": "debug",
+        "z": "8ada3cb510c5cdd7",
+        "name": "debug 60",
+        "active": true,
+        "tosidebar": true,
+        "console": false,
+        "tostatus": false,
+        "complete": "false",
+        "statusVal": "",
+        "statusType": "auto",
+        "x": 780,
+        "y": 60,
+        "wires": []
+    },
+    {
+        "id": "0785224d35f0a715",
+        "type": "serial-port",
+        "name": "UART0",
+        "serialport": "/dev/ttyAMA0",
+        "serialbaud": "9600",
+        "databits": "8",
+        "parity": "none",
+        "stopbits": "1",
+        "waitfor": "(",
+        "dtr": "none",
+        "rts": "none",
+        "cts": "none",
+        "dsr": "none",
+        "newline": "]",
+        "bin": "false",
+        "out": "char",
+        "addchar": "",
+        "responsetimeout": "10000"
+    }
+]
