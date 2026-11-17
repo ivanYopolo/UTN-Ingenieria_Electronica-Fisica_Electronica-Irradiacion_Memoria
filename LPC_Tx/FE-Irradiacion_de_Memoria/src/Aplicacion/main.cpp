@@ -3,7 +3,7 @@
  * ### Irradiación de Memoria en CONEA ###
  * ## Física Electrónica - R2521 - CL2026 ##
  *
- * @brief           Código de escritura en memoria FLASH
+ * @brief           Código de escritura en memoria RAM
  * 					y lectura constante en la misma.
  *
  * @author			Enrique Stutz

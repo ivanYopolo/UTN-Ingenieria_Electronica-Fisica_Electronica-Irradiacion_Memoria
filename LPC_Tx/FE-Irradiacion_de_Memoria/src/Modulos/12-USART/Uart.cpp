@@ -10,11 +10,8 @@
 /***********************************************************************************************************************************
  *** INCLUDES
  **********************************************************************************************************************************/
-#include "Uart.h"
-#include "swm.h"
-#include "PERI_SYSCON.h"
-#include "core_cm0plus.h"
-
+#include "Modulos/12-USART/Uart.h"
+#include "Drivers/SwitchMatrix/swm.h"
 
 /***********************************************************************************************************************************
  *** DEFINES PRIVADOS AL MODULO
@@ -136,8 +133,8 @@ Uart::Uart(
 				| ( paridad << 4 )				// 0=NOPARITY 2=PAR 3=IMPAR
 				| ( 0 << 6 )					// 0=1BITSTOP 1=2BITSTOP
 				| ( 0 << 9 )					// 0=NOFLOWCONTROL 1=FLOWCONTROL
-				| ( 0 << 11 );					// 0=ASINCRONICA 1=SINCRONICA
-				//| ( 1 << 15 );				// LOOP
+				| ( 0 << 11 )					// 0=ASINCRONICA 1=SINCRONICA
+				| ( 1 << 15 );				// LOOP
 
 	// OSR vale por default 16 = 0xF
 	m_usart->OSR = 0xF;
