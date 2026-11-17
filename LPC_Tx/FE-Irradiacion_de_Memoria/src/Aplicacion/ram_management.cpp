@@ -27,6 +27,7 @@
 #define INT_PI				3141592653
 #define OK_MSG_SIZE			5
 #define FLIP_MSG_SIZE		7
+#define TX_DELAY_SECONDS	10
 
 
 /* ###########################################
@@ -225,7 +226,7 @@ void Tx_Memory_Data() {
 	delete[] txData;
 
 //	timer_Tx.TimerStart( 1, Timer::bases_t::MIN, Tx_Memory_Data );
-	timer_Tx.TimerStart( 10, Timer::bases_t::SEG, Tx_Memory_Data );
+	timer_Tx.TimerStart( TX_DELAY_SECONDS, Timer::bases_t::SEG, Tx_Memory_Data );
 }
 
 
