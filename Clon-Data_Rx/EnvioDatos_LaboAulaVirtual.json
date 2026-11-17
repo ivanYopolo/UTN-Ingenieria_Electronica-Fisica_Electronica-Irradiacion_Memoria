@@ -1,0 +1,23 @@
+[
+    {
+        "id": "f9d1604a44c4b83a",
+        "type": "function",
+        "z": "55d9d1555bfd4174",
+        "g": "55761826364f3673",
+        "name": "config",
+        "func": "global.set(\"GlobalConfig\", {\n    \"proyecto\": \"2026-2c-LPC845\",\n    \"tempDirectory\": \"/home/raspi/irrad/tmpfiles/\",\n    \"sendDirectory\": \"/home/raspi/irrad/sendfiles/\",\n    \"dp_per_file\": 100\n})\nreturn msg;",
+        "outputs": 1,
+        "timeout": 0,
+        "noerr": 0,
+        "initialize": "",
+        "finalize": "",
+        "libs": [],
+        "x": 330,
+        "y": 80,
+        "wires": [
+            [
+                "39e02d55d9ae1e40"
+            ]
+        ]
+    }
+]

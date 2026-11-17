@@ -1,0 +1,662 @@
+[
+    {
+        "id": "7d7a16224e695315",
+        "type": "subflow",
+        "name": "Cargar dato",
+        "info": "# Registro de datos por lotes\r\n\r\nGuarda un dato por línea (con timestamp) en un archivo `.txt`, hasta alcanzar la cantidad máxima de datapoints. Al completarse, deja el archivo listo para subir al servidor y arranca uno nuevo.\r\n\r\n## Funcionamiento\r\n- Cada mensaje de entrada (`msg.payload`) se guarda como una línea: `timestamp, dato`.\r\n- El archivo en curso se crea con el nombre `AAAA-M-D_H-m-s.txt` y se reutiliza hasta llegar al máximo.\r\n- Al llegar a `max_dps` datapoints, se indica el archivo a enviar y el siguiente dato abre un archivo nuevo.\r\n- **Envío anticipado:** un mensaje con `msg.sendnow = true` interrumpe la acumulación y envía el archivo actual de inmediato, sin agregar su contenido al archivo.\r\n\r\n## Parámetros del subflujo\r\n| Parámetro | Descripción |\r\n|---|---|\r\n| `proyecto` | Nombre del proyecto; carpeta raíz donde se guardan y suben los archivos |\r\n| `subdir` | Subcarpeta dentro del proyecto, para separar distintas mediciones |\r\n| `max_dps` | Cantidad máxima de datapoints (líneas) por archivo antes de enviarlo |\r\n",
+        "category": "laboratorio virtual",
+        "in": [
+            {
+                "x": 200,
+                "y": 260,
+                "wires": [
+                    {
+                        "id": "252cbf6b4539e417"
+                    }
+                ]
+            }
+        ],
+        "out": [],
+        "env": [
+            {
+                "name": "proyecto",
+                "type": "str",
+                "value": "",
+                "ui": {
+                    "icon": "font-awesome/fa-archive",
+                    "label": {
+                        "es-ES": "Proyecto"
+                    },
+                    "type": "input",
+                    "opts": {
+                        "types": [
+                            "str",
+                            "num",
+                            "env"
+                        ]
+                    }
+                }
+            },
+            {
+                "name": "subdir",
+                "type": "str",
+                "value": "",
+                "ui": {
+                    "icon": "font-awesome/fa-folder-open-o",
+                    "label": {
+                        "es-ES": "Sub-directorio"
+                    },
+                    "type": "input",
+                    "opts": {
+                        "types": [
+                            "str",
+                            "num",
+                            "env"
+                        ]
+                    }
+                }
+            },
+            {
+                "name": "max_dps",
+                "type": "num",
+                "value": "10",
+                "ui": {
+                    "icon": "font-awesome/fa-align-left",
+                    "label": {
+                        "es-ES": "Lineas por archivo"
+                    },
+                    "type": "spinner",
+                    "opts": {
+                        "min": 1
+                    }
+                }
+            }
+        ],
+        "meta": {},
+        "color": "#3FADB5",
+        "icon": "node-red/file-out.svg"
+    },
+    {
+        "id": "a4a5c5035a7996f5",
+        "type": "function",
+        "z": "7d7a16224e695315",
+        "name": "format for file",
+        "func": "let date__ = new Date()\nlet count_dps = flow.get(\"count_dps\") ?? 0 // cuenta de datapoints\nconst CONFIG = global.get(\"GlobalConfig\")\nconst proyecto = env.get(\"proyecto\");\nconst subdir = env.get(\"subdir\");\nconst max_dps_per_file = env.get(\"max_dps\");\n\nconst dir = `${proyecto}/${subdir}`\n\ncount_dps ++;\n\nlet current_file\n\nif (flow.get(\"current_file\") == null)\n{\n    current_file = `${date__.getFullYear()}-${date__.getMonth()+1}-${date__.getDate()}_${date__.getHours()}-${date__.getMinutes()}-${date__.getSeconds()}.txt`\n    flow.set(\"current_file\", current_file)\n}\nelse\n{\n    current_file = flow.get(\"current_file\")\n}\nmsg.tempfile = `${CONFIG.tempDirectory}/${dir}/${current_file}`\n\nmsg.payload = `${date__.getFullYear()}-${date__.getMonth()+1}-${date__.getDate()} ${date__.getHours()}:${date__.getMinutes()}:${date__.getSeconds()}.${date__.getMilliseconds()}, ${msg.payload}\\n`\n\nmsg.is_lastest = count_dps >= max_dps_per_file;\n\nif (msg.is_lastest)\n{\n    count_dps = 0;\n    flow.set(\"current_file\", null)\n    msg.sendfile = `${CONFIG.sendDirectory}/${dir}/${current_file}`\n}\n\n\nflow.set(\"count_dps\", count_dps)\n\nreturn msg;\n",
+        "outputs": 1,
+        "timeout": 0,
+        "noerr": 0,
+        "initialize": "",
+        "finalize": "",
+        "libs": [],
+        "x": 530,
+        "y": 280,
+        "wires": [
+            [
+                "e4e3c306e4913651"
+            ]
+        ]
+    },
+    {
+        "id": "e4e3c306e4913651",
+        "type": "file",
+        "z": "7d7a16224e695315",
+        "name": "",
+        "filename": "tempfile",
+        "filenameType": "msg",
+        "appendNewline": false,
+        "createDir": true,
+        "overwriteFile": "false",
+        "encoding": "none",
+        "x": 740,
+        "y": 280,
+        "wires": [
+            [
+                "4a63c7bed68b76b9"
+            ]
+        ]
+    },
+    {
+        "id": "4a63c7bed68b76b9",
+        "type": "switch",
+        "z": "7d7a16224e695315",
+        "name": "is_lastest?",
+        "property": "is_lastest",
+        "propertyType": "msg",
+        "rules": [
+            {
+                "t": "true"
+            }
+        ],
+        "checkall": "true",
+        "repair": false,
+        "outputs": 1,
+        "x": 950,
+        "y": 280,
+        "wires": [
+            [
+                "cc482c728fb0cb84"
+            ]
+        ]
+    },
+    {
+        "id": "cc482c728fb0cb84",
+        "type": "file in",
+        "z": "7d7a16224e695315",
+        "name": "",
+        "filename": "tempfile",
+        "filenameType": "msg",
+        "format": "utf8",
+        "chunk": false,
+        "sendError": false,
+        "encoding": "none",
+        "allProps": false,
+        "x": 1130,
+        "y": 280,
+        "wires": [
+            [
+                "41299a41ed0cebd6",
+                "3c26e3468617ee51"
+            ]
+        ]
+    },
+    {
+        "id": "41299a41ed0cebd6",
+        "type": "file",
+        "z": "7d7a16224e695315",
+        "name": "",
+        "filename": "sendfile",
+        "filenameType": "msg",
+        "appendNewline": true,
+        "createDir": true,
+        "overwriteFile": "false",
+        "encoding": "none",
+        "x": 1320,
+        "y": 280,
+        "wires": [
+            [
+                "12c80cc340b7ba8c"
+            ]
+        ]
+    },
+    {
+        "id": "12c80cc340b7ba8c",
+        "type": "file",
+        "z": "7d7a16224e695315",
+        "name": "",
+        "filename": "tempfile",
+        "filenameType": "msg",
+        "appendNewline": true,
+        "createDir": false,
+        "overwriteFile": "delete",
+        "encoding": "none",
+        "x": 1500,
+        "y": 280,
+        "wires": [
+            []
+        ]
+    },
+    {
+        "id": "3c26e3468617ee51",
+        "type": "debug",
+        "z": "7d7a16224e695315",
+        "name": "debug 59",
+        "active": true,
+        "tosidebar": true,
+        "console": false,
+        "tostatus": false,
+        "complete": "true",
+        "targetType": "full",
+        "statusVal": "",
+        "statusType": "auto",
+        "x": 1280,
+        "y": 340,
+        "wires": []
+    },
+    {
+        "id": "252cbf6b4539e417",
+        "type": "switch",
+        "z": "7d7a16224e695315",
+        "name": "",
+        "property": "sendnow",
+        "propertyType": "msg",
+        "rules": [
+            {
+                "t": "true"
+            },
+            {
+                "t": "else"
+            }
+        ],
+        "checkall": "true",
+        "repair": false,
+        "outputs": 2,
+        "x": 330,
+        "y": 260,
+        "wires": [
+            [
+                "407ae230a4f65382"
+            ],
+            [
+                "a4a5c5035a7996f5"
+            ]
+        ]
+    },
+    {
+        "id": "407ae230a4f65382",
+        "type": "function",
+        "z": "7d7a16224e695315",
+        "name": "send now",
+        "func": "\nlet current_file = flow.get(\"current_file\")\n\nif (current_file != null)\n{\n    const CONFIG = global.get(\"GlobalConfig\")\n    const proyecto = env.get(\"proyecto\");\n    const subdir = env.get(\"subdir\");\n\n    const dir = `${proyecto}/${subdir}`\n\n    flow.set(\"count_dps\", 0);\n    flow.set(\"current_file\", null)\n    msg.tempfile = `${CONFIG.tempDirectory}/${dir}/${current_file}`\n    msg.sendfile = `${CONFIG.sendDirectory}/${dir}/${current_file}`\n    return msg;\n}",
+        "outputs": 1,
+        "timeout": 0,
+        "noerr": 0,
+        "initialize": "",
+        "finalize": "",
+        "libs": [],
+        "x": 940,
+        "y": 220,
+        "wires": [
+            [
+                "cc482c728fb0cb84"
+            ]
+        ]
+    },
+    {
+        "id": "6762d861184d6eb8",
+        "type": "tab",
+        "label": "DHT11",
+        "disabled": false,
+        "info": ""
+    },
+    {
+        "id": "b313820fb849a191",
+        "type": "group",
+        "z": "6762d861184d6eb8",
+        "name": "DTH11",
+        "style": {
+            "stroke": "#92d04f",
+            "fill": "#c8e7a7",
+            "label": true,
+            "color": "#000000"
+        },
+        "nodes": [
+            "6b29a81e3a67adb4",
+            "a2cb99303e9e59f4",
+            "9d5ba8e6c403f828"
+        ],
+        "x": 994,
+        "y": 119,
+        "w": 412,
+        "h": 142
+    },
+    {
+        "id": "1cab0375473b5d53",
+        "type": "group",
+        "z": "6762d861184d6eb8",
+        "name": "DTH11",
+        "style": {
+            "stroke": "#92d04f",
+            "fill": "#c8e7a7",
+            "label": true,
+            "color": "#000000"
+        },
+        "nodes": [
+            "65342897d2b4f1d0",
+            "24cf9481a9293f97",
+            "e0d1a0fe9f60357d"
+        ],
+        "x": 994,
+        "y": 399,
+        "w": 412,
+        "h": 142
+    },
+    {
+        "id": "e74e11cd797c1351",
+        "type": "inject",
+        "z": "6762d861184d6eb8",
+        "name": "GPIO 26 cada 3 s",
+        "props": [
+            {
+                "p": "payload"
+            }
+        ],
+        "repeat": "3",
+        "crontab": "",
+        "once": true,
+        "onceDelay": "5",
+        "topic": "",
+        "payload": "26",
+        "payloadType": "str",
+        "x": 130,
+        "y": 360,
+        "wires": [
+            [
+                "ddbc49e32951197f"
+            ]
+        ]
+    },
+    {
+        "id": "ddbc49e32951197f",
+        "type": "exec",
+        "z": "6762d861184d6eb8",
+        "command": "/home/raspi/dht-env/bin/python /home/raspi/dht11.py",
+        "addpay": "payload",
+        "append": "",
+        "useSpawn": "false",
+        "timer": "30",
+        "winHide": false,
+        "oldrc": false,
+        "name": "Leer DHT11",
+        "x": 310,
+        "y": 360,
+        "wires": [
+            [
+                "49939d0e423714ab"
+            ],
+            [
+                "88c6bde81460bdc4"
+            ],
+            []
+        ]
+    },
+    {
+        "id": "49939d0e423714ab",
+        "type": "json",
+        "z": "6762d861184d6eb8",
+        "name": "",
+        "property": "payload",
+        "action": "obj",
+        "pretty": false,
+        "x": 470,
+        "y": 320,
+        "wires": [
+            [
+                "2eef2ad28ee3125d"
+            ]
+        ]
+    },
+    {
+        "id": "2eef2ad28ee3125d",
+        "type": "switch",
+        "z": "6762d861184d6eb8",
+        "name": "¿lectura ok?",
+        "property": "payload.ok",
+        "propertyType": "msg",
+        "rules": [
+            {
+                "t": "true"
+            },
+            {
+                "t": "else"
+            }
+        ],
+        "checkall": "true",
+        "repair": false,
+        "outputs": 2,
+        "x": 630,
+        "y": 320,
+        "wires": [
+            [
+                "6fc1fe551bf57017"
+            ],
+            [
+                "fcbdb693c4f68b0b"
+            ]
+        ]
+    },
+    {
+        "id": "6fc1fe551bf57017",
+        "type": "function",
+        "z": "6762d861184d6eb8",
+        "name": "Separar temp / hum",
+        "func": "const p = msg.payload;\nreturn [\n    { payload: p.temperatura, topic: 'temperatura', gpio: p.gpio },\n    { payload: p.humedad, topic: 'humedad', gpio: p.gpio }\n];",
+        "outputs": 2,
+        "timeout": "",
+        "noerr": 0,
+        "initialize": "",
+        "finalize": "",
+        "libs": [],
+        "x": 820,
+        "y": 300,
+        "wires": [
+            [
+                "665fa73207c7b65c",
+                "a2cb99303e9e59f4"
+            ],
+            [
+                "206da68307811e39",
+                "24cf9481a9293f97"
+            ]
+        ]
+    },
+    {
+        "id": "665fa73207c7b65c",
+        "type": "debug",
+        "z": "6762d861184d6eb8",
+        "name": "Temperatura °C",
+        "active": true,
+        "tosidebar": true,
+        "console": false,
+        "tostatus": true,
+        "complete": "payload",
+        "targetType": "msg",
+        "statusVal": "payload",
+        "statusType": "auto",
+        "x": 1080,
+        "y": 100,
+        "wires": []
+    },
+    {
+        "id": "206da68307811e39",
+        "type": "debug",
+        "z": "6762d861184d6eb8",
+        "name": "Humedad %",
+        "active": true,
+        "tosidebar": true,
+        "console": false,
+        "tostatus": true,
+        "complete": "payload",
+        "targetType": "msg",
+        "statusVal": "payload",
+        "statusType": "auto",
+        "x": 1070,
+        "y": 380,
+        "wires": []
+    },
+    {
+        "id": "fcbdb693c4f68b0b",
+        "type": "debug",
+        "z": "6762d861184d6eb8",
+        "name": "Lectura fallida",
+        "active": true,
+        "tosidebar": true,
+        "console": false,
+        "tostatus": false,
+        "complete": "payload",
+        "targetType": "msg",
+        "x": 800,
+        "y": 340,
+        "wires": []
+    },
+    {
+        "id": "88c6bde81460bdc4",
+        "type": "debug",
+        "z": "6762d861184d6eb8",
+        "name": "stderr",
+        "active": true,
+        "tosidebar": true,
+        "console": false,
+        "tostatus": false,
+        "complete": "payload",
+        "targetType": "msg",
+        "x": 470,
+        "y": 420,
+        "wires": []
+    },
+    {
+        "id": "6b29a81e3a67adb4",
+        "type": "inject",
+        "z": "6762d861184d6eb8",
+        "g": "b313820fb849a191",
+        "name": "agregar dato",
+        "props": [
+            {
+                "p": "payload"
+            },
+            {
+                "p": "topic",
+                "vt": "str"
+            }
+        ],
+        "repeat": "",
+        "crontab": "",
+        "once": false,
+        "onceDelay": 0.1,
+        "topic": "",
+        "payload": "",
+        "payloadType": "date",
+        "x": 1110,
+        "y": 220,
+        "wires": [
+            [
+                "a2cb99303e9e59f4"
+            ]
+        ]
+    },
+    {
+        "id": "a2cb99303e9e59f4",
+        "type": "subflow:7d7a16224e695315",
+        "z": "6762d861184d6eb8",
+        "g": "b313820fb849a191",
+        "name": "",
+        "env": [
+            {
+                "name": "proyecto",
+                "value": "2026-2c-DHT11",
+                "type": "str"
+            },
+            {
+                "name": "subdir",
+                "value": "Temperatura",
+                "type": "str"
+            }
+        ],
+        "x": 1310,
+        "y": 220,
+        "wires": []
+    },
+    {
+        "id": "9d5ba8e6c403f828",
+        "type": "inject",
+        "z": "6762d861184d6eb8",
+        "g": "b313820fb849a191",
+        "name": "subir ya",
+        "props": [
+            {
+                "p": "payload"
+            },
+            {
+                "p": "sendnow",
+                "v": "true",
+                "vt": "bool"
+            }
+        ],
+        "repeat": "",
+        "crontab": "",
+        "once": false,
+        "onceDelay": 0.1,
+        "topic": "",
+        "payload": "",
+        "payloadType": "date",
+        "x": 1090,
+        "y": 160,
+        "wires": [
+            [
+                "a2cb99303e9e59f4"
+            ]
+        ]
+    },
+    {
+        "id": "65342897d2b4f1d0",
+        "type": "inject",
+        "z": "6762d861184d6eb8",
+        "g": "1cab0375473b5d53",
+        "name": "agregar dato",
+        "props": [
+            {
+                "p": "payload"
+            },
+            {
+                "p": "topic",
+                "vt": "str"
+            }
+        ],
+        "repeat": "",
+        "crontab": "",
+        "once": false,
+        "onceDelay": 0.1,
+        "topic": "",
+        "payload": "",
+        "payloadType": "date",
+        "x": 1110,
+        "y": 500,
+        "wires": [
+            [
+                "24cf9481a9293f97"
+            ]
+        ]
+    },
+    {
+        "id": "24cf9481a9293f97",
+        "type": "subflow:7d7a16224e695315",
+        "z": "6762d861184d6eb8",
+        "g": "1cab0375473b5d53",
+        "name": "",
+        "env": [
+            {
+                "name": "proyecto",
+                "value": "2026-2c-DHT11",
+                "type": "str"
+            },
+            {
+                "name": "subdir",
+                "value": "Humedad",
+                "type": "str"
+            }
+        ],
+        "x": 1310,
+        "y": 500,
+        "wires": []
+    },
+    {
+        "id": "e0d1a0fe9f60357d",
+        "type": "inject",
+        "z": "6762d861184d6eb8",
+        "g": "1cab0375473b5d53",
+        "name": "subir ya",
+        "props": [
+            {
+                "p": "payload"
+            },
+            {
+                "p": "sendnow",
+                "v": "true",
+                "vt": "bool"
+            }
+        ],
+        "repeat": "",
+        "crontab": "",
+        "once": false,
+        "onceDelay": 0.1,
+        "topic": "",
+        "payload": "",
+        "payloadType": "date",
+        "x": 1090,
+        "y": 440,
+        "wires": [
+            [
+                "24cf9481a9293f97"
+            ]
+        ]
+    }
+]

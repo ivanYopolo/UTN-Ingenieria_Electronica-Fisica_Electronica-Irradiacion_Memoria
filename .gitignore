@@ -20,14 +20,11 @@
 # BASURA WSL (WINDOWS) #
 *.Identifier
 
-# VS/VS CODE #
-*.json
-
 # CORE DUMPS #
 *.cdump
 
 # MCUXPRESSO IDE #
-**/.mcuxpressoide_packages_support/*
+**/.mcuxpressoide_packages_support/**
 **/.mcuxpressoide_packages_support/info.properties
 **/.metadata
 
