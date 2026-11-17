@@ -176,8 +176,10 @@ void Tx_Memory_Data() {
 	uint32_t	tempChangedData[RAM_INT_BLOCKS];
 	char 		okMsg[OK_MSG_SIZE] = "(OK)";
 	char 		flipMsg[FLIP_MSG_SIZE] = "(FLIP)";
-	char		inicioDeTrama = '(';
-	char		finDeTrama = ')';
+	char		inicioDeTramaMensaje = '[';
+	char		finDeTramaMensaje = ']';
+	char		inicioDeTramaNumero = '(';
+	char		finDeTramaNumero = ')';
 //	char		txData[MAX_UINT32_VALUE];	// Calcular dígitos en valor máximo de uint32_t
 	char		*txData = nullptr;
 	uint32_t	uint32_tTmpMaxDigits = 0;
@@ -195,10 +197,8 @@ void Tx_Memory_Data() {
 		txData[i] = 0;
 	}
 
-//	Clear_RAM_Bytes( valueRead, RAM_MEMORY_SIZE );
 
-//	Read_Bytes_in_Memory( (void *) memoryIrradiated, (void *) valueRead,
-//						  RAM_MEMORY_SIZE );
+	serialCOMS_LPC.Transmit( (void *) &inicioDeTramaMensaje, sizeof(inicioDeTramaMensaje) );
 
 	if ( CheckBitFlips_RAM( memoryIrradiated, tempChangedData ) == true ) {
 
@@ -209,24 +209,23 @@ void Tx_Memory_Data() {
 
 			if ( tempChangedData[i] != 0 ) {
 				// Preparar mensaje en ASCII.
-				Serial_Armar_Trama_Data( txData, txSize, inicioDeTrama, finDeTrama );
+				Serial_Armar_Trama_Data( txData, txSize, inicioDeTramaNumero, finDeTramaNumero );
 				uint32_tToASCII( tempChangedData[i], txData + 1, uint32_tTmpMaxDigits );
 				serialCOMS_LPC.Transmit( (void *) txData, txSize );
 			}
 		}
-
-//		serialCOMS_LPC.Transmit( (void *) & valueRead, sizeof(valueRead) );
-
 	} else {
 
 		serialCOMS_LPC.Transmit( (void *) okMsg, OK_MSG_SIZE - 1 );
 	}
 
 
+	serialCOMS_LPC.Transmit( (void *) &finDeTramaMensaje, sizeof(finDeTramaMensaje) );
+
 	delete[] txData;
 
-	timer_Tx.TimerStart( 1, Timer::bases_t::MIN, Tx_Memory_Data );
-//	timer_Tx.TimerStart( 5, Timer::bases_t::SEG, Tx_Memory_Data );
+//	timer_Tx.TimerStart( 1, Timer::bases_t::MIN, Tx_Memory_Data );
+	timer_Tx.TimerStart( 10, Timer::bases_t::SEG, Tx_Memory_Data );
 }
 
 

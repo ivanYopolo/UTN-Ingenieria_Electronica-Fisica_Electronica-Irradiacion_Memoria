@@ -19,11 +19,16 @@
 /* ###########################################
  * ### MACROS & TIPOS DE DATOS PRIVADOS ###
  * ########################################### */
-#define	__CTIMER_PRESCALER_FREQ		((uint32_t) 1e6)
+//#define	__CTIMER_PRESCALER_FREQ		((uint32_t) 1e6)
 
 /***************************
  *** PINOUT ***
  ***************************/
+
+// >> LED BLUE (GPIO)
+#define __LED_BLUE_PORT				1
+#define __LED_BLUE_PIN				1
+
 
 // >> UART: comunicación asíncrona
 #define __UART_TX_PORT				0
@@ -49,6 +54,8 @@
 Uart serialCOMS_LPC( __UART_TX_PORT, __UART_TX_PIN, __UART_RX_PORT, __UART_RX_PIN, __UART_USART_x,
 					 __UART_BAUDRATE, Uart::bits_de_datos::ocho_bits, Uart::paridad_t::NoParidad,
 					 __UART_MAX_RX, __UART_MAX_TX );
+GPIO ledBlue( __LED_BLUE_PORT, __LED_BLUE_PIN,
+			  GPIO::direccion_e::SALIDA, GPIO::actividad_e::BAJO );
 
 
 /* ###########################################
@@ -76,6 +83,8 @@ Uart serialCOMS_LPC( __UART_TX_PORT, __UART_TX_PIN, __UART_RX_PORT, __UART_RX_PI
 void Inicializar() {
 //	 ### Systick ###
 	SysTick_Config( 1 );
+
+	ledBlue.SetPin();
 
 	// ### RAM ###
 	Init_RAM_Write();

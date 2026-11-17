@@ -35,9 +35,9 @@
     /* ###########################################
      * ### VARIABLES GLOBALES PÚBLICAS ###
      * ########################################### */
-	extern CTimer ctimerObject;
-	extern Uart serialCOMS_LPC;
-	extern Timer timer_Tx;
+	extern Uart 	serialCOMS_LPC;
+	extern Timer 	timer_Tx;
+	extern GPIO		ledBlue;
 
 
     /* ###########################################
