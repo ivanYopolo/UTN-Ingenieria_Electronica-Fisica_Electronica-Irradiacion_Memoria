@@ -19,7 +19,7 @@
 /* ###########################################
  * ### MACROS & TIPOS DE DATOS PRIVADOS ###
  * ########################################### */
-#define	__CTIMER_PRESCALER_FREQ		((uint32_t) 1e6)
+//#define	__CTIMER_PRESCALER_FREQ		((uint32_t) 1e6)
 
 /***************************
  *** PINOUT ***
