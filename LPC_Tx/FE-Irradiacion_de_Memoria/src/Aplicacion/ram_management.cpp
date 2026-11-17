@@ -172,8 +172,8 @@ void Tx_Memory_Data() {
 	uint32_t	tempChangedData[RAM_INT_BLOCKS];
 	char 		okMsg[OK_MSG_SIZE] = "(OK)";
 	char 		flipMsg[FLIP_MSG_SIZE] = "(FLIP)";
-	char		inicioDeTrama = '[';
-	char		finDeTrama = ']';
+	char		inicioDeTrama = '(';
+	char		finDeTrama = ')';
 //	char		txData[MAX_UINT32_VALUE];	// Calcular dígitos en valor máximo de uint32_t
 	char		*txData = nullptr;
 	uint32_t	uint32_tTmpMaxDigits = 0;
