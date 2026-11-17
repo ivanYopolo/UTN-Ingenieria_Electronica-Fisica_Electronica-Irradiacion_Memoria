@@ -117,6 +117,9 @@ void Clear_RAM_Bytes( void *inputptr, uint32_t arraySizeBytes ) {
 void Write_Bytes_in_Memory( const void * const dataInput, const uint32_t nBytes,
 							void * const writtenData, const uint32_t sizeWrite ) {
 
+	// # TESTING #
+	// Forzamos bitflips siempre.
+
 	const uint8_t * const 	intDataInput	= (const uint8_t * const) dataInput;
 	uint8_t	* const 		writtenRAM 		= (uint8_t * const) writtenData;
 
@@ -129,7 +132,8 @@ void Write_Bytes_in_Memory( const void * const dataInput, const uint32_t nBytes,
 
 
 	for ( uint32_t i = 0; i < (sizeWrite * nBytes); ++i ) {
-		writtenRAM[i] = intDataInput[i % nBytes];
+//		writtenRAM[i] = intDataInput[i % nBytes];
+		writtenRAM[i] = intDataInput[i % nBytes] - i;
 	}
 }
 
